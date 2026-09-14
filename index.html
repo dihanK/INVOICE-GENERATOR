@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Invoice Studio - Letter Invoice Generator</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script> 
+<style> 
+*{box-sizing:border-box} 
+:root{ 
+  --ink:#14213d; 
+  --blue:#145da0; 
+  --blue2:#1d78c1; 
+  --pale:#edf5fc; 
+  --line:#b8cde0; 
+  --muted:#64748b; 
+  --bg:#f3f6fa; 
+} 
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg)} 
+body{min-height:100vh} 
+.app{max-width:1420px;margin:auto;padding:28px} 
+.hero{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:18px} 
+h1{margin:0;font-size:34px;letter-spacing:-.7px} 
+.sub{margin:7px 0 0;color:var(--muted);font-size:14px} 
+.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{background:#fff;border:1px solid #d9e2ec;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:800} 
+.toolbar,.form{background:#fff;border:1px solid #dce4ed;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 8px 25px rgba(20,33,61,.07)} 
+.toolbar-grid{display:grid;grid-template-columns:1.1fr 1.4fr .7fr;gap:12px} 
+.font-control{display:flex;align-items:center;gap:10px}.font-control input[type=range]{padding:0;border:0;box-shadow:none}.font-size-value{min-width:44px;text-align:right;font-weight:800;color:#145da0;font-size:12px} 
+label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#475569;margin-bottom:6px} 
+input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:10px 11px;background:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:#2c7fc5;box-shadow:0 0 0 3px rgba(44,127,197,.12)}textarea{min-height:58px;resize:vertical} 
+.btns{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}button{border:0;border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:800}.primary{background:#145da0;color:#fff}.secondary{background:#edf2f7;color:#14213d}.danger{background:#fee2e2}.status{font-size:12px;color:var(--muted);margin-top:9px}.hint{font-size:11px;color:var(--muted);margin-top:6px} 
+.section-title{font-weight:900;border-bottom:2px solid var(--ink);padding:8px 0 7px;margin:13px 0 11px;display:flex;align-items:center;gap:8px}.section-title:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--blue)} 
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.span2{grid-column:span 2}.span4{grid-column:span 4} 
+.data-card{margin-top:18px;background:#0f172a;color:#e2e8f0;border-radius:14px;padding:15px;display:none}.data-card.show{display:block}.data-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.data-item{background:#1e293b;border:1px solid #334155;border-radius:9px;padding:8px}.data-item b{display:block;color:#93c5fd;font-size:9px;text-transform:uppercase}.data-item span{display:block;margin-top:3px;font-size:11px;word-break:break-word} 
+.print-note{text-align:center;color:#64748b;font-size:11px;margin:8px} 
+.invoice-wrap{overflow:auto;padding:8px 0 30px} 
+ .invoice{ 
+  width:8.5in;height:11in;min-height:11in;margin:0 auto;background:#fff;position:relative;overflow:hidden; 
+  padding:0 .76in .35in;color:#111;--invoice-font-scale:1;box-shadow:0 12px 40px rgba(0,0,0,.12); 
+  font-family:"Times New Roman",Times,serif;display:block; 
+} 
+/* Exact print-style layout for the supplied LB Finance reference. */ 
+.letterhead-space{height:1.96in;} 
+.invoice-top{display:grid;grid-template-columns:1fr 3.1fr;gap:34px;align-items:end;margin-bottom:13px;} 
+.invoice-title{font-family:Arial,Helvetica,sans-serif;font: size 19px;px;font-weight:700;letter-spacing:0;padding:0 0 1px 132px;color:#111;white-space:nowrap;} 
+.meta{display:grid;grid-template-columns:145px 1fr;font-size:11px;line-height:1.23;border:0;margin-left:24px;} 
+.meta div{padding:0;min-height:14px;border:0;white-space:nowrap}.meta .k{font-weight:400;position:relative}.meta .k:after{content:":";position:absolute;right:10px}.meta div:nth-child(even){padding-left:2px} 
+.box{border:0;border-radius:0;overflow:visible} 
+.box-title{background:#fff;color:#111;font-weight:700;font-size:11px;padding:0 0 3px;letter-spacing:0;border-bottom:2px solid #111;line-height:1.25} 
+.customer-box{margin-top:0;min-height:82px;border:0;} 
+.customer-content{font-size:11px;padding:3px 0 0;line-height:1.35;white-space:pre-line;min-height:54px;} 
+.finance-single{margin-top:1px;min-height:49px;font-size:11px;line-height:1.35;} 
+.finance-single .label{display:block;font-weight:700;border-bottom:2px solid #111;padding-bottom:3px;margin-bottom:3px;} 
+.finance-single span:not(.label){display:block;} 
+.finance-address{white-space:pre-line;line-height:1.35;min-height:42px;} 
+.vehicle{margin-top:1px}.vehicle-grid{display:grid;grid-template-columns:100px 165px 105px 1fr;border:0;overflow:visible;margin-top:6px}.vehicle-grid>div{min-height:21px;padding:0;font-size:11px;border:0;display:block;line-height:1.28}.vehicle-grid .label{font-weight:400;background:#fff;color:#111}.vehicle-grid>div:nth-child(2),.vehicle-grid>div:nth-child(4),.vehicle-grid>div:nth-child(6),.vehicle-grid>div:nth-child(8){padding-left:0}.vehicle-grid>div:nth-child(2)::before,.vehicle-grid>div:nth-child(4)::before,.vehicle-grid>div:nth-child(6)::before,.vehicle-grid>div:nth-child(8)::before{content:": ";} 
+.summary{margin-top:10px;border:0;overflow:visible}.summary-row{display:grid;grid-template-columns:200px 100px 1fr;border:0;font-size:11px;min-height:20px;line-height:1.25}.summary-row>div{padding:0;border:0;display:block}.summary-row .money{justify-content:flex-start}.summary-head{display:block;background:#fff;color:#111;font-weight:700;font-size:11px;min-height:0;border:0;border-bottom:2px solid #111;padding-bottom:3px;margin-bottom:3px}.summary-head>div:not(:first-child){display:none}.summary-row:not(.summary-head)>div:nth-child(2):empty{display:block}.summary-row:not(.summary-head)>div:nth-child(3){padding-left:0}.summary-total{font-weight:400;font-size:11px;border:0;margin-top:1px}.summary-total>div{padding:0}.summary-total>div:nth-child(2){display:block}.summary-total>div:nth-child(3){padding-left:0} 
+.summary-row:not(.summary-head)>div:nth-child(3) .money{display:block} 
+.bottom{margin-top:34px;display:block;padding-top:0}.signature{font-size:11px;width:275px;border-top:0;padding-top:0;line-height:1.3}.signature:before{content:"........................................................";display:block;font-size:11px;letter-spacing:1px;margin-bottom:2px}.thankyou{display:none} 
+.footer-line,.footer-note{display:none} 
+@media print{ 
+  html,body{background:#fff!important;margin:0!important;padding:0!important} 
+  .app>h1,.app>.sub,.hero,.toolbar,.form,.print-note,.data-card{display:none!important} 
+  .app{padding:0!important;max-width:none!important} 
+  .invoice-wrap{overflow:visible!important;padding:0!important} 
+  .invoice{box-shadow:none!important;margin:0!important;width:8.5in!important;height:11in!important;min-height:11in!important;padding:0 .76in .35in!important;overflow:hidden!important} 
+  @page{size:Letter portrait;margin:0} 
+} 
+@media(max-width:850px){.toolbar-grid,.grid,.data-grid{grid-template-columns:1fr 1fr}.span4{grid-column:span 2}.hero{display:block}.badges{margin-top:12px}.invoice{transform-origin:top left}} 
+@media print{ 
+  html,body{background:#fff!important;margin:0!important;padding:0!important} 
+  .app>h1,.app>.sub,.hero,.toolbar,.form,.print-note,.data-card{display:none!important} 
+  .app{padding:0!important;max-width:none!important} 
+  .invoice-wrap{overflow:visible!important;padding:0!important} 
+  .invoice{box-shadow:none!important;margin:0!important;width:8.5in!important;height:11in!important;min-height:11in!important;padding:0 .40in .24in!important;overflow:hidden!important} 
+  @page{size:Letter portrait;margin:0} 
+} 
+ 
+/* Remove all invoice table/grid lines for pre-printed letterhead */ 
+.invoice .meta, 
+.invoice .meta div, 
+.invoice .customer-box, 
+.invoice .two-col, 
+.invoice .two-col .cell, 
+.invoice .vehicle-grid, 
+.invoice .vehicle-grid > div, 
+.invoice .summary-row, 
+.invoice .summary-head, 
+.invoice .summary-total { 
+  border: none !important; 
+} 
+.invoice .meta { border-top: none !important; } 
+.invoice .meta div { border-bottom: none !important; } 
+.invoice .box-title { border-bottom: 2px solid #111 !important; } 
+.invoice .customer-box { border-top: none !important; } 
+.invoice .two-col { border-top: none !important; border-bottom: none !important; } 
+.invoice .vehicle-grid { border-top: none !important; } 
+.invoice .vehicle-grid > div { border-bottom: none !important; } 
+.invoice .summary-row { border-bottom: none !important; } 
+.invoice .summary-head { border-top: none !important; border-bottom: none !important; } 
+.invoice .summary-total { border-bottom: none !important; } 
+.invoice .footer-line { border-top: none !important; } 
+ 
+/* FINAL PRINT MATCH: supplied LB Finance reference */ 
+@media screen, print { 
+  .invoice { font-size:calc(12px * var(--invoice-font-scale)); } 
+  .invoice-top { margin-bottom:18px !important; } 
+  .invoice-title { font-size:calc(19px * var(--invoice-font-scale)) !important; padding-left:132px !important; } 
+  .meta { font-size:calc(12px * var(--invoice-font-scale)) !important; margin-left:42px !important; line-height:1.28 !important; } 
+  .meta div { min-height:16px !important; } 
+  .box-title { 
+    font-size:calc(12px * var(--invoice-font-scale)) !important; 
+    font-weight:700 !important; 
+    padding:0 0 5px !important; 
+    border-bottom:2px solid #111 !important; 
+  } 
+  .customer-box { margin-top:0 !important; min-height:92px !important; margin-bottom:17px !important; } 
+  .customer-content { font-size:calc(12px * var(--invoice-font-scale)) !important; line-height:1.45 !important; padding-top:5px !important; min-height:60px !important; } 
+  .finance-single { margin-top:0 !important; min-height:75px !important; font-size:calc(12px * var(--invoice-font-scale)) !important; line-height:1.45 !important; margin-bottom:17px !important; } 
+  .finance-single .label { 
+    font-size:calc(12px * var(--invoice-font-scale)) !important; 
+    border-bottom:2px solid #111 !important; 
+    padding-bottom:5px !important; 
+    margin-bottom:5px !important; 
+  } 
+  .finance-address { min-height:48px !important; line-height:1.45 !important; } 
+  .vehicle { margin-top:0 !important; margin-bottom:17px !important; } 
+  .vehicle-grid { margin-top:9px !important; } 
+  .vehicle-grid>div { font-size:calc(12px * var(--invoice-font-scale)) !important; min-height:25px !important; line-height:1.35 !important; } 
+  .summary { margin-top:0 !important; } 
+  .summary-head { 
+    font-size:calc(12px * var(--invoice-font-scale)) !important; 
+    border-bottom:2px solid #111 !important; 
+    padding-bottom:5px !important; 
+    margin-bottom:5px !important; 
+  } 
+  .summary-row { font-size:calc(12px * var(--invoice-font-scale)) !important; min-height:22px !important; line-height:1.35 !important; } 
+  .summary-total { margin-top:2px !important; } 
+  .bottom { 
+    position:absolute !important; 
+    left:.40in !important; 
+    bottom:.72in !important; 
+    margin:0 !important; 
+    padding:0 !important; 
+  } 
+  .signature { font-size:calc(12px * var(--invoice-font-scale)) !important; width:275px !important; } 
+  .signature:before { font-size:calc(12px * var(--invoice-font-scale)) !important; margin-bottom:3px !important; } 
+} 
+@media print { 
+  .invoice { padding-left:.40in !important; padding-right:.40in !important; } 
+} 
+ 
+/* EXPLICIT CUSTOMER HEADING UNDERLINE */ 
+.invoice .customer-box > .box-title { 
+  display:block !important; 
+  width:100% !important; 
+  border-bottom:2px solid #000 !important; 
+  padding-bottom:5px !important; 
+  margin-bottom:0 !important; 
+  box-sizing:border-box !important; 
+} 
+ 
+/* FINAL POSITION ADJUSTMENT */ 
+.invoice-top{grid-template-columns:1.05fr 2.95fr !important;gap:20px !important;align-items:end !important;} 
+.invoice-title{font-size:26px !important;padding-left:0 !important;text-align:left !important;line-height:1 !important;} 
+.meta{margin-left:58px !important;} 
+@media print{ 
+  .invoice-top{grid-template-columns:1.05fr 2.95fr !important;gap:20px !important;} 
+  .invoice-title{font-size:26px !important;padding-left:0 !important;text-align:left !important;} 
+  .meta{margin-left:58px !important;} 
+} 
+ 
+/* V4 EXACT HEADER POSITION: title left, details block right */ 
+.invoice-top{position:relative !important;display:block !important;height:1.02in !important;margin-bottom:18px !important;} 
+.invoice-title{position:absolute !important;left:0 !important;top:.28in !important;padding:0 !important;margin:0 !important;font-family:Arial,Helvetica,sans-serif !important;font-size:28px !important;font-weight:700 !important;line-height:1 !important;text-align:left !important;} 
+.invoice-top .meta{position:absolute !important;right:0 !important;top:0 !important;width:3.55in !important;margin:0 !important;display:grid !important;grid-template-columns:145px 1fr !important;font-size:12px !important;line-height:1.28 !important;} 
+@media print{ 
+  .invoice-top{position:relative !important;display:block !important;height:1.02in !important;margin-bottom:18px !important;} 
+  .invoice-title{position:absolute !important;left:0 !important;top:.28in !important;padding:0 !important;margin:0 !important;font-size:28px !important;line-height:1 !important;text-align:left !important;} 
+  .invoice-top .meta{position:absolute !important;right:0 !important;top:0 !important;width:3.55in !important;margin:0 !important;font-size:12px !important;line-height:1.28 !important;} 
+} 
+
+/* USER REQUESTED HEADER POSITION:
+   - Move INVOICE into the upper-left pre-printed area.
+   - Move the invoice details block to the upper-right area.
+*/
+@media screen, print {
+  .invoice { position:relative !important; }
+
+  /* The header is positioned over the letterhead area. */
+  .invoice-top {
+    position:absolute !important;
+    left:.40in !important;
+    right:.40in !important;
+    top:.18in !important;
+    height:1.28in !important;
+    margin:0 !important;
+    display:block !important;
+    z-index:10 !important;
+  }
+
+  .invoice-title {
+    position:absolute !important;
+    left:0 !important;
+    top:.20in !important;
+    margin:0 !important;
+    padding:0 !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:28px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+    text-align:left !important;
+    white-space:nowrap !important;
+  }
+
+  .invoice-top .meta {
+    position:absolute !important;
+    right:0 !important;
+    top:.75in !important;
+    width:3.55in !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:grid !important;
+    grid-template-columns:145px 1fr !important;
+    font-size:12px !important;
+    line-height:1.28 !important;
+    background:#fff !important;
+    border:0 !important;
+  }
+
+  /* Keep the body content starting at the original letterhead boundary. */
+  .customer-box {
+    margin-top:0 !important;
+  }
+}
+
+</style> 
+</head> 
+<body> 
+<div class="app"> 
+  <div class="hero"> 
+    <div><h1>Invoice Studio</h1><p class="sub">Load the vehicle register, search by customer/chassis/vehicle/order and generate a Letter-size invoice.</p></div> 
+    <div class="badges"><span class="badge">⚡ Excel Auto-Fill</span><span class="badge">🖨 Letter Ready</span><span class="badge">✓ One Page</span></div> 
+  </div> 
+ 
+  <div class="toolbar"> 
+    <div class="toolbar-grid"> 
+      <div><label>Excel / CSV workbook</label><input id="excelFile" type="file" accept=".xlsx,.xls,.csv"></div> 
+      <div><label>Find customer or chassis</label><input id="recordSearch" placeholder="Type name, chassis, vehicle no, order no..."></div> 
+      <div><label>Letterhead top space</label><input id="letterheadHeight" type="number" value="1.96" min="0" max="2.5" step="0.01"></div> 
+      <div><label>Invoice font size</label><div class="font-control"><input id="invoiceFontSize" type="range" min="10" max="16" step="0.5" value="12"><span id="invoiceFontSizeValue" class="font-size-value">12 px</span></div><div class="hint">Increase or decrease the printed invoice text size.</div></div> 
+    </div> 
+    <div style="margin-top:12px"><label>Select record</label><select id="recordSelect" disabled><option>Upload Excel first</option></select><div class="hint">Selecting a row fills every matching field available in the spreadsheet. Fields not present in the spreadsheet remain manual.</div></div> 
+    <div class="btns"> 
+      <button class="primary" onclick="window.print()">🖨 Print invoice</button> 
+      <button class="secondary" onclick="downloadPDF()">⬇ Download PDF</button> 
+      <button class="secondary" onclick="clearForm()">↺ Clear</button> 
+      <button class="secondary" onclick="toggleData()">⌁ Show all Excel data</button> 
+    </div> 
+    <div id="status" class="status">No workbook loaded.</div> 
+  </div> 
+ 
+  <div class="form"> 
+    <div class="section-title">Invoice details</div> 
+    <div class="grid"> 
+      <div><label>Invoice No. *</label><input id="invoiceNo" placeholder="Enter invoice number"></div> 
+      <div><label>Engine Number *</label><input id="engineNo" placeholder="Enter engine number"></div> 
+      <div><label>Date *</label><input id="invoiceDate" type="date"></div> 
+      <div><label>Purchase Order No.</label><input id="poNo" placeholder="Auto-filled from Order No."></div> 
+      <div style="display:none"><label>Sales Person</label><input id="salesPerson"></div> 
+    </div> 
+ 
+    <div class="section-title">Customer & registration</div> 
+    <div class="grid"> 
+      <div class="span2"><label>Customer name</label><input id="customerName"></div> 
+      <div class="span2"><label>Customer address</label><textarea id="customerAddress"></textarea></div> 
+      <div><label>ID / NIC No.</label><input id="idNo"></div> 
+      <div><label>Vehicle No.</label><input id="vehicleNo"></div> 
+      <div><label>Received Date</label><input id="receivedDate"></div> 
+      <div><label>Shop</label><input id="shop"></div> 
+    </div> 
+ 
+    <div class="section-title">Finance partner</div> 
+    <div class="grid"> 
+      <div class="span2"><label>Finance company</label><input id="financeCompany" placeholder="Auto-filled"></div> 
+      <div class="span2"><label>Finance company address (3 lines)</label><textarea id="financeAddress" placeholder="Line 1 
+Line 2 
+Line 3"></textarea></div> 
+    </div> 
+ 
+    <div class="section-title">Vehicle description</div> 
+    <div class="grid"> 
+      <div><label>Chassis number</label><input id="chassisNo"></div> 
+      <div><label>Vehicle type</label><input id="vehicleType"></div> 
+      <div><label>Year of manufacture</label><input id="year"></div> 
+      <div><label>Color</label><input id="color"></div> 
+      <div><label>Make</label><input id="make"></div> 
+      <div><label>Model</label><input id="model"></div> 
+      <div><label>Country of origin</label><input id="origin"></div> 
+      <div><label>Sale type</label><input id="saleType"></div> 
+    </div> 
+ 
+    <div class="section-title">Transaction summary</div> 
+    <div class="grid"> 
+      <div><label>Number of units</label><input id="units" type="number" min="0" step="1" value="1"></div> 
+      <div><label>Unit selling price (Rs.)</label><input id="unitPrice" type="number" min="0" step="0.01" value="0"></div> 
+      <div><label>Discount (Rs.)</label><input id="discount" type="number" min="0" step="0.01" value="0"></div> 
+      <div><label>Advance (Rs.)</label><input id="advance" type="number" min="0" step="0.01" value="0"></div> 
+      <div><label>VAT rate</label><input id="vatRate" type="number" min="0" step="0.01" value="18"></div> 
+    </div> 
+  </div> 
+ 
+  <div id="dataCard" class="data-card"><div style="font-weight:900;margin-bottom:9px">All data from selected Excel row</div><div id="dataGrid" class="data-grid"></div></div> 
+  <div class="print-note">Letter preview • pre-printed letterhead • line-based layout • larger row spacing • designed for one Letter page.</div> 
+ 
+  <div class="invoice-wrap"> 
+    <div class="invoice" id="invoice"> 
+      <div class="letterhead-space" id="letterheadSpace"></div> 
+ 
+      <div class="invoice-top"> 
+        <div class="invoice-title">INVOICE</div> 
+        <div class="meta"> 
+          <div class="k">VAT No-</div><div id="pVat">124008026-7000</div> 
+          <div class="k">Invoice No</div><div id="pInvoiceNo"></div> 
+          <div class="k">Location</div><div>Colombo</div> 
+          <div class="k">Date</div><div id="pDate"></div> 
+          <div class="k">Purchase Order No</div><div id="pPo"></div> 
+        </div> 
+      </div> 
+ 
+      <div class="customer-box box"> 
+        <div class="box-title">CUSTOMER NAME AND ADDRESS</div> 
+        <div class="customer-content" id="pCustomer"></div> 
+      </div> 
+ 
+      <div class="finance-single"> 
+        <span class="label">FINANCE PARTNER</span> 
+        <span id="pFinance"></span> 
+        <span id="pFinanceAddress" class="finance-address"></span> 
+      </div> 
+ 
+      <div class="vehicle"> 
+        <div class="box-title">VEHICLE DESCRIPTION</div> 
+        <div class="vehicle-grid"> 
+          <div class="label">Chassis number</div><div id="pChassis"></div> 
+          <div class="label">Make</div><div id="pMake"></div> 
+          <div class="label">Engine Number</div><div id="pEngine"></div> 
+          <div class="label">Model</div><div id="pModel"></div> 
+          <div class="label">Color</div><div id="pColor"></div> 
+          <div class="label">Year Of Manufacture</div><div id="pYear"></div> 
+          <div class="label">Country of Origin</div><div id="pOrigin"></div> 
+          <div class="label">Vehicle Type</div><div id="pVehicleType"></div> 
+        </div> 
+      </div> 
+ 
+      <div class="summary"> 
+        <div class="summary-row summary-head"><div>TRANSACTION SUMMARY</div><div>QTY</div><div>AMOUNT (Rs.)</div></div> 
+        <div class="summary-row"><div>Number of Units</div><div id="pUnits"></div><div></div></div> 
+        <div class="summary-row"><div>Unit Selling Price</div><div></div><div class="money">Rs. <span id="pUnitPrice">0.00</span></div></div> 
+        <div class="summary-row"><div>Discount</div><div></div><div class="money">Rs. <span id="pDiscount">0.00</span></div></div> 
+        <div class="summary-row"><div>Advance</div><div></div><div class="money">Rs. <span id="pAdvance">0.00</span></div></div> 
+        <div class="summary-row"><div>Total</div><div></div><div class="money">Rs. <span id="pTotal">0.00</span></div></div> 
+        <div class="summary-row"><div>Unit Price</div><div></div><div class="money">Rs. <span id="pNetUnit">0.00</span></div></div> 
+        <div class="summary-row"><div>TAX - VAT <span id="pVatRate">18</span>%</div><div></div><div class="money">Rs. <span id="pVatAmount">0.00</span></div></div> 
+        <div class="summary-row summary-total"><div>Total</div><div></div><div class="money">Rs. <span id="pGrandTotal">0.00</span></div></div> 
+      </div> 
+ 
+      <div class="bottom"> 
+        <div class="signature">Authorized Signature</div> 
+        <div class="thankyou">Thank you for choosing Singer Sri Lanka PLC</div> 
+      </div> 
+      <div class="footer-line"></div> 
+      <div class="footer-note">This invoice is computer generated.</div> 
+    </div> 
+  </div> 
+</div> 
+ 
+<script> 
+let rows=[]; 
+let selectedRow=null; 
+const $=id=>document.getElementById(id); 
+const fields=['invoiceNo','engineNo','invoiceDate','poNo','salesPerson','customerName','customerAddress','idNo','vehicleNo','receivedDate','shop','financeCompany','financeAddress','chassisNo','vehicleType','year','color','make','model','origin','saleType','units','unitPrice','discount','advance','vatRate']; 
+fields.forEach(id=>$(id)?.addEventListener('input',updatePreview)); 
+$('letterheadHeight').addEventListener('input',()=>{$('letterheadSpace').style.height=(Math.max(0,parseFloat($('letterheadHeight').value)||0))+'in'}); 
+$('invoiceFontSize').addEventListener('input',()=>{const v=parseFloat($('invoiceFontSize').value)||12;$('invoice').style.setProperty('--invoice-font-scale',v/12);$('invoiceFontSizeValue').textContent=v+' px'}); 
+$('recordSearch').addEventListener('input',filterRecords); 
+$('recordSelect').addEventListener('change',()=>{ 
+  const i=Number($('recordSelect').value); 
+  if(Number.isInteger(i)&&rows[i]){ 
+    selectedRow=rows[i]; 
+    fillFromRow(selectedRow); 
+    showAllData(selectedRow); 
+    updatePreview(); 
+  } 
+}); 
+function clean(v){return v===null||v===undefined?'':String(v).trim()} 
+function normalize(s){return clean(s).toLowerCase().replace(/\ufeff/g,'').replace(/[^a-z0-9]/g,'')} 
+function value(r,names){ 
+  const keys=Object.keys(r||{}); 
+  for(const n of names){ 
+    if(Object.prototype.hasOwnProperty.call(r,n)&&clean(r[n])!=='')return r[n]; 
+    const nn=normalize(n);const k=keys.find(x=>normalize(x)===nn); 
+    if(k&&clean(r[k])!=='')return r[k]; 
+  } 
+  return ''; 
+} 
+function parseCSV(text){ 
+  text=text.replace(/^\ufeff/,''); 
+  const out=[];let row=[],cell='',quoted=false; 
+  for(let i=0;i<text.length;i++){ 
+    const c=text[i],n=text[i+1]; 
+    if(c==='"'){ 
+      if(quoted&&n==='"'){cell+='"';i++;}else quoted=!quoted; 
+    }else if(c===','&&!quoted){row.push(cell);cell='';} 
+    else if((c==='\n'||c==='\r')&&!quoted){ 
+      if(c==='\r'&&n==='\n')i++; 
+      row.push(cell);cell=''; 
+      if(row.some(x=>clean(x)!==''))out.push(row); 
+      row=[]; 
+    }else cell+=c; 
+  } 
+  if(cell!==''||row.length){row.push(cell);if(row.some(x=>clean(x)!==''))out.push(row)} 
+  if(!out.length)return []; 
+  const headers=out[0].map((h,i)=>clean(h)||`Column ${i+1}`); 
+  return out.slice(1).map((r,idx)=>{ 
+    const o={__row:idx+2,__sheet:'CSV'}; 
+    headers.forEach((h,i)=>o[h]=clean(r[i])); 
+    return o; 
+  }).filter(r=>Object.keys(r).some(k=>!k.startsWith('__')&&clean(r[k])!=='')); 
+} 
+$('excelFile').addEventListener('change',async e=>{ 
+  const file=e.target.files[0];if(!file)return; 
+  $('status').textContent='Reading '+file.name+'…'; 
+  try{ 
+    const ext=file.name.toLowerCase().split('.').pop(); 
+    if(ext==='csv'){ 
+      rows=parseCSV(await file.text()); 
+    }else{ 
+      if(typeof XLSX==='undefined')throw new Error('Excel library did not load. For offline use, save the register as CSV.'); 
+      const data=await file.arrayBuffer(); 
+      const wb=XLSX.read(data,{type:'array',cellDates:true,raw:false}); 
+      rows=[]; 
+      wb.SheetNames.forEach(sheet=>{ 
+        const json=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:'',raw:false}); 
+        json.forEach((r,i)=>rows.push({...r,__sheet:sheet,__row:i+2})); 
+      }); 
+    } 
+    buildRecordList(); 
+    $('status').textContent=rows.length?`✓ ${file.name}: ${rows.length} records loaded. Search/select a customer or chassis.`:`⚠ ${file.name}: no data rows found.`; 
+    $('status').style.color=rows.length?'#16a34a':'#dc2626'; 
+  }catch(err){console.error(err);rows=[];buildRecordList();$('status').textContent='⚠ Could not read file: '+err.message;$('status').style.color='#dc2626';} 
+}); 
+function recordLabel(r){ 
+  const customer=value(r,['Customer Name']); 
+  const chassis=value(r,['Chassis No','Chassis Number','Chassis']); 
+  const vehicle=value(r,['Vehicle No','Vehicle Number']); 
+  const order=value(r,['Order No','Order Number']); 
+  const type=value(r,['Vehicle Type']); 
+  return [customer,chassis,vehicle,order,type].filter(Boolean).join('  |  ')||`Row ${r.__row}`; 
+} 
+function buildRecordList(){ 
+  const sel=$('recordSelect');sel.innerHTML=''; 
+  sel.add(new Option(rows.length?`Select a record (${rows.length} loaded)`:'No records found','')); 
+  rows.forEach((r,i)=>sel.add(new Option(recordLabel(r),i))); 
+  sel.disabled=!rows.length; 
+} 
+function filterRecords(){ 
+  const q=normalize($('recordSearch').value);const sel=$('recordSelect');sel.innerHTML=''; 
+  const matches=rows.map((r,i)=>({r,i})).filter(({r})=>!q||Object.keys(r).filter(k=>!k.startsWith('__')).some(k=>normalize(r[k]).includes(q))); 
+  sel.add(new Option(matches.length?`${matches.length} matching record(s)`:'No matching records','')); 
+  matches.forEach(({r,i})=>sel.add(new Option(recordLabel(r),i))); 
+  sel.disabled=!matches.length; 
+} 
+function setVal(id,v){if($(id)&&clean(v)!=='')$(id).value=clean(v)} 
+function fillFromRow(r){ 
+  setVal('customerName',value(r,['Customer Name'])); 
+  setVal('chassisNo',value(r,['Chassis No','Chassis Number','Chassis'])); 
+  setVal('vehicleType',value(r,['Vehicle Type'])); 
+  setVal('poNo',value(r,['Order No','Order Number','PO Number','Purchase Order No'])); 
+  setVal('salesPerson',value(r,['Sales Person','Salesperson','Sales Person Name'])); 
+  setVal('idNo',value(r,['Id No','ID No','NIC No','NIC'])); 
+  setVal('shop',value(r,['Shop'])); 
+  setVal('saleType',value(r,['Cash Sale or Credit Sale','Sale Type','Sale'])); 
+  setVal('financeCompany',value(r,['Leasing Company','Finance Company','Finance Partner'])); 
+  setVal('vehicleNo',value(r,['Vehicle No','Vehicle Number'])); 
+  setVal('receivedDate',value(r,['Received Date'])); 
+  setVal('year',value(r,['Year of Manufacture','Year','Manufacture Year'])); 
+  setVal('color',value(r,['Color','Colour'])); 
+  setVal('make',value(r,['Make','Manufacturer'])); 
+  setVal('model',value(r,['Model','Vehicle Model'])); 
+  setVal('origin',value(r,['Country of Origin','Origin','Country'])); 
+  setVal('financeAddress',value(r,['Finance Address','Finance Company Address'])); 
+} 
+function showAllData(r){ 
+  const grid=$('dataGrid');grid.innerHTML=''; 
+  Object.keys(r).filter(k=>!k.startsWith('__')).forEach(k=>{ 
+    const d=document.createElement('div');d.className='data-item'; 
+    d.innerHTML='<b>'+escapeHtml(k)+'</b><span>'+escapeHtml(clean(r[k])||'—')+'</span>'; 
+    grid.appendChild(d); 
+  }); 
+  $('dataCard').classList.add('show'); 
+} 
+function toggleData(){$('dataCard').classList.toggle('show')} 
+function escapeHtml(s){return clean(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))} 
+function money(v){return Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} 
+function dateText(v){ 
+  if(!v)return ''; 
+  const s=clean(v);const d=new Date(s); 
+  return isNaN(d)?s:d.toLocaleDateString('en-GB'); 
+} 
+function formatCustomerAddress(v){ 
+  const raw=clean(v); 
+  if(!raw) return ''; 
+  let parts=raw.split(/\n|\r|\s*,\s*/).map(x=>x.trim()).filter(Boolean); 
+  if(parts.length>3){ parts=[parts[0],parts.slice(1,-1).join(', '),parts[parts.length-1]]; } 
+  return parts.slice(0,3).join('\n'); 
+} 
+function formatThreeLines(v){ 
+  const raw=clean(v); 
+  if(!raw) return ''; 
+  let parts=raw.split(/\n|\r|\s*,\s*/).map(x=>x.trim()).filter(Boolean); 
+  if(parts.length>3) parts=[parts[0],parts.slice(1,-1).join(', '),parts[parts.length-1]]; 
+  while(parts.length<3) parts.push(''); 
+  return parts.slice(0,3).join('\n'); 
+} 
+function updatePreview(){ 
+  const g=id=>$(id)?.value||''; 
+  $('pInvoiceNo').textContent=g('invoiceNo'); 
+  $('pEngine').textContent=g('engineNo'); 
+  $('pDate').textContent=dateText(g('invoiceDate')); 
+  $('pPo').textContent=g('poNo'); 
+  $('pCustomer').textContent=[g('customerName'),formatCustomerAddress(g('customerAddress'))].filter(Boolean).join('\n'); 
+  $('pFinance').textContent=g('financeCompany'); 
+  $('pFinanceAddress').textContent=formatThreeLines(g('financeAddress')); 
+  $('pChassis').textContent=g('chassisNo'); 
+  $('pMake').textContent=g('make'); 
+  $('pEngine').textContent=g('engineNo'); 
+  $('pModel').textContent=g('model'); 
+  $('pColor').textContent=g('color'); 
+  $('pYear').textContent=g('year'); 
+  $('pOrigin').textContent=g('origin'); 
+  $('pVehicleType').textContent=g('vehicleType'); 
+  $('pUnits').textContent=g('units')||'0'; 
+  const unitSellingPrice=Number(g('unitPrice')||0);
+  const disc=Number(g('discount')||0);
+  const adv=Number(g('advance')||0);
+
+  // Exact requested calculation:
+  // TOTAL 1 = UNIT SELLING PRICE - (DISCOUNT + ADVANCE)
+  // UNIT PRICE = TOTAL 1 / 118 * 100
+  // TAX-VAT 18% = TOTAL 1 - UNIT PRICE
+  // TOTAL 2 = UNIT PRICE + TAX-VAT 18%
+  const total1=Math.max(0,unitSellingPrice-(disc+adv));
+  const unitPrice=total1/118*100;
+  const vatAmt=total1-unitPrice;
+  const total2=unitPrice+vatAmt;
+
+  $('pUnitPrice').textContent=money(unitSellingPrice);
+  $('pDiscount').textContent=money(disc);
+  $('pAdvance').textContent=money(adv);
+  $('pTotal').textContent=money(total1);
+  $('pNetUnit').textContent=money(unitPrice);
+  $('pVatRate').textContent='18';
+  $('pVatAmount').textContent=money(vatAmt);
+  $('pGrandTotal').textContent=money(total2); 
+} 
+function clearForm(){ 
+  document.querySelectorAll('.form input,.form textarea').forEach(el=>{if(el.type!=='number')el.value=''}); 
+  $('units').value=1;$('unitPrice').value=0;$('discount').value=0;$('advance').value=0;$('vatRate').value=18; 
+  $('recordSearch').value='';$('recordSelect').value='';$('dataCard').classList.remove('show');selectedRow=null;updatePreview(); 
+} 
+async function downloadPDF(){ 
+  if(typeof html2canvas==='undefined'||!window.jspdf){alert('PDF libraries are not available. Please check your internet connection or use Print → Save as PDF.');return} 
+  const invoice=$('invoice');const old=invoice.style.boxShadow;invoice.style.boxShadow='none'; 
+  try{ 
+    const canvas=await html2canvas(invoice,{scale:2,backgroundColor:'#fff',useCORS:true}); 
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'portrait',unit:'in',format:'letter'}); 
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,8.5,11);pdf.save('Invoice-'+($('invoiceNo').value||'invoice')+'.pdf'); 
+  }finally{invoice.style.boxShadow=old} 
+} 
+$('invoiceDate').valueAsDate=new Date(); 
+$('letterheadSpace').style.height=$('letterheadHeight').value+'in'; 
+$('invoice').style.setProperty('--invoice-font-scale',(parseFloat($('invoiceFontSize').value)||12)/12); 
+updatePreview(); 
+</script> 
+</body> 
+</html>                                                                                                                            
