@@ -107,7 +107,7 @@ input,select,textarea,button{font:inherit}input,select,textarea{width:100%;borde
 .invoice .vehicle-grid { border-top: none !important; } 
 .invoice .vehicle-grid > div { border-bottom: none !important; } 
 .invoice .summary-row { border-bottom: none !important; } 
-.invoice .summary-head { border-top: none !important; border-bottom: none !important; } 
+.invoice .summary-head { border-top: none !important; border-bottom: 2px solid #000 !important; } 
 .invoice .summary-total { border-bottom: none !important; } 
 .invoice .footer-line { border-top: none !important; } 
  
@@ -287,6 +287,7 @@ input,select,textarea,button{font:inherit}input,select,textarea{width:100%;borde
       <div><label>ID / NIC No.</label><input id="idNo"></div> 
       <div><label>Vehicle No.</label><input id="vehicleNo"></div> 
       <div><label>Received Date</label><input id="receivedDate"></div> 
+      <div><label>Shop Code</label><input id="shopCode"></div>
       <div><label>Shop</label><input id="shop"></div> 
     </div> 
  
@@ -334,6 +335,8 @@ Line 3"></textarea></div>
           <div class="k">Invoice No</div><div id="pInvoiceNo"></div> 
           <div class="k">Location</div><div>Colombo</div> 
           <div class="k">Date</div><div id="pDate"></div> 
+          <div class="k">Shop Code</div><div id="pShopCode"></div>
+          <div class="k">Shop</div><div id="pShop"></div>
           <div class="k">Purchase Order No</div><div id="pPo"></div> 
         </div> 
       </div> 
@@ -359,7 +362,8 @@ Line 3"></textarea></div>
           <div class="label">Color</div><div id="pColor"></div> 
           <div class="label">Year Of Manufacture</div><div id="pYear"></div> 
           <div class="label">Country of Origin</div><div id="pOrigin"></div> 
-          <div class="label">Vehicle Type</div><div id="pVehicleType"></div> 
+          <div class="label">Vehicle Type</div><div id="pVehicleType"></div>
+          <div class="label">Vehicle Number</div><div id="pVehicleNo"></div> 
         </div> 
       </div> 
  
@@ -389,7 +393,7 @@ Line 3"></textarea></div>
 let rows=[]; 
 let selectedRow=null; 
 const $=id=>document.getElementById(id); 
-const fields=['invoiceNo','engineNo','invoiceDate','poNo','salesPerson','customerName','customerAddress','idNo','vehicleNo','receivedDate','shop','financeCompany','financeAddress','chassisNo','vehicleType','year','color','make','model','origin','saleType','units','unitPrice','discount','advance','vatRate']; 
+const fields=['invoiceNo','engineNo','invoiceDate','poNo','salesPerson','customerName','customerAddress','idNo','vehicleNo','receivedDate','shopCode','shop','financeCompany','financeAddress','chassisNo','vehicleType','year','color','make','model','origin','saleType','units','unitPrice','discount','advance','vatRate']; 
 fields.forEach(id=>$(id)?.addEventListener('input',updatePreview)); 
 $('letterheadHeight').addEventListener('input',()=>{$('letterheadSpace').style.height=(Math.max(0,parseFloat($('letterheadHeight').value)||0))+'in'}); 
 $('invoiceFontSize').addEventListener('input',()=>{const v=parseFloat($('invoiceFontSize').value)||12;$('invoice').style.setProperty('--invoice-font-scale',v/12);$('invoiceFontSizeValue').textContent=v+' px'}); 
@@ -489,6 +493,7 @@ function fillFromRow(r){
   setVal('poNo',value(r,['Order No','Order Number','PO Number','Purchase Order No'])); 
   setVal('salesPerson',value(r,['Sales Person','Salesperson','Sales Person Name'])); 
   setVal('idNo',value(r,['Id No','ID No','NIC No','NIC'])); 
+  setVal('shopCode',value(r,['Shop Code','ShopCode','Code']));
   setVal('shop',value(r,['Shop'])); 
   setVal('saleType',value(r,['Cash Sale or Credit Sale','Sale Type','Sale'])); 
   setVal('financeCompany',value(r,['Leasing Company','Finance Company','Finance Partner'])); 
@@ -538,6 +543,8 @@ function updatePreview(){
   $('pInvoiceNo').textContent=g('invoiceNo'); 
   $('pEngine').textContent=g('engineNo'); 
   $('pDate').textContent=dateText(g('invoiceDate')); 
+  $('pShopCode').textContent=g('shopCode');
+  $('pShop').textContent=g('shop');
   $('pPo').textContent=g('poNo'); 
   $('pCustomer').textContent=[g('customerName'),formatCustomerAddress(g('customerAddress'))].filter(Boolean).join('\n'); 
   $('pFinance').textContent=g('financeCompany'); 
@@ -549,7 +556,8 @@ function updatePreview(){
   $('pColor').textContent=g('color'); 
   $('pYear').textContent=g('year'); 
   $('pOrigin').textContent=g('origin'); 
-  $('pVehicleType').textContent=g('vehicleType'); 
+  $('pVehicleType').textContent=g('vehicleType');
+  $('pVehicleNo').textContent=g('vehicleNo'); 
   $('pUnits').textContent=g('units')||'0'; 
   const unitSellingPrice=Number(g('unitPrice')||0);
   const disc=Number(g('discount')||0);
