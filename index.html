@@ -339,10 +339,33 @@ input,select,textarea,button{font:inherit}input,select,textarea{width:100%;borde
  
     <div class="section-title">Finance partner</div> 
     <div class="grid"> 
-      <div class="span2"><label>Finance company</label><input id="financeCompany" placeholder="Auto-filled"></div> 
-      <div class="span2"><label>Finance company address (3 lines)</label><textarea id="financeAddress" placeholder="Line 1 
-Line 2 
-Line 3"></textarea></div> 
+      <div class="span2">
+        <label>Finance company</label>
+        <select id="financeCompany">
+          <option value="">Select finance company</option>
+          <option value="Abans Finance PLC">Abans Finance PLC</option>
+          <option value="Alliance Finance Co. PLC">Alliance Finance Co. PLC</option>
+          <option value="AMW Capital Leasing & Finance PLC">AMW Capital Leasing & Finance PLC</option>
+          <option value="Asia Asset Finance PLC">Asia Asset Finance PLC</option>
+          <option value="Assetline Finance PLC">Assetline Finance PLC</option>
+          <option value="HNB Finance PLC">HNB Finance PLC</option>
+          <option value="Janashakthi Finance PLC">Janashakthi Finance PLC</option>
+          <option value="Lanka Credit and Business Finance PLC">Lanka Credit and Business Finance PLC</option>
+          <option value="LB Finance PLC">LB Finance PLC</option>
+          <option value="LOLC Finance PLC">LOLC Finance PLC</option>
+          <option value="Mahindra Ideal Finance PLC">Mahindra Ideal Finance PLC</option>
+          <option value="Mercantile Investments & Finance PLC">Mercantile Investments & Finance PLC</option>
+          <option value="People's Leasing & Finance PLC">People's Leasing & Finance PLC</option>
+          <option value="Senkadagala Finance PLC">Senkadagala Finance PLC</option>
+          <option value="Singer Finance (Lanka) PLC">Singer Finance (Lanka) PLC</option>
+          <option value="Siyapatha Finance PLC">Siyapatha Finance PLC</option>
+          <option value="SMB Finance PLC">SMB Finance PLC</option>
+          <option value="Softlogic Finance PLC">Softlogic Finance PLC</option>
+          <option value="UB Finance PLC">UB Finance PLC</option>
+          <option value="Vallibel Finance PLC">Vallibel Finance PLC</option>
+        </select>
+      </div>
+      <div class="span2"><label>Finance company address (3 lines)</label><textarea id="financeAddress" placeholder="Auto-filled when finance company is selected"></textarea></div> 
     </div> 
  
     <div class="section-title">Vehicle description</div> 
@@ -351,7 +374,15 @@ Line 3"></textarea></div>
       <div><label>Vehicle type</label><input id="vehicleType"></div> 
       <div><label>Year of manufacture</label><input id="year"></div> 
       <div><label>Color</label><input id="color"></div> 
-      <div><label>Make</label><input id="make"></div> 
+      <div>
+          <label>Make</label>
+          <select id="make">
+            <option value="">Select make</option>
+            <option value="TAILG">TAILG</option>
+            <option value="LIMA">LIMA</option>
+            <option value="SAFARI">SAFARI</option>
+          </select>
+        </div> 
       <div><label>Model</label><input id="model"></div> 
       <div><label>Country of origin</label><input id="origin"></div> 
       <div><label>Sale type</label><input id="saleType"></div> 
@@ -443,7 +474,36 @@ const fields=['invoiceNo','engineNo','invoiceDate','poNo','salesPerson','custome
 fields.forEach(id=>$(id)?.addEventListener('input',updatePreview)); 
 $('letterheadHeight').addEventListener('input',()=>{$('letterheadSpace').style.height=(Math.max(0,parseFloat($('letterheadHeight').value)||0))+'in'}); 
 $('invoiceFontSize').addEventListener('input',()=>{const v=parseFloat($('invoiceFontSize').value)||12;$('invoice').style.setProperty('--invoice-font-scale',v/12);$('invoiceFontSizeValue').textContent=v+' px'}); 
-$('recordSearch').addEventListener('input',filterRecords); 
+$('recordSearch').addEventListener('input',filterRecords);
+const financeAddresses = {
+  "Abans Finance PLC": "456, R. A. De Mel Mawatha,\nColombo 03",
+  "Alliance Finance Co. PLC": "Alliance House, 84, Ward Place,\nColombo 07",
+  "AMW Capital Leasing & Finance PLC": "185, Union Place,\nColombo 02",
+  "Asia Asset Finance PLC": "76, Park Street,\nColombo 02",
+  "Assetline Finance PLC": "120/120A, Pannipitiya Road,\nBattaramulla",
+  "HNB Finance PLC": "168, Nawala Road,\nNugegoda",
+  "Janashakthi Finance PLC": "338, T. B. Jayah Mawatha,\nColombo 10",
+  "Lanka Credit and Business Finance PLC": "76, S. De S. Jayasinghe Mawatha, Kohuwela,\nNugegoda",
+  "LB Finance PLC": "275/75, Prof. Stanley Wijesundera Mawatha,\nColombo 07",
+  "LOLC Finance PLC": "100/1, Sri Jayawardenapura Mawatha,\nRajagiriya",
+  "Mahindra Ideal Finance PLC": "299, Dr. Colvin R. De Silva Mawatha, Union Place,\nColombo 02",
+  "Mercantile Investments & Finance PLC": "236, Galle Road,\nColombo 03",
+  "People's Leasing & Finance PLC": "1161, Maradana Road,\nColombo 08",
+  "Senkadagala Finance PLC": "267, 2nd Floor, Galle Road,\nColombo 03",
+  "Singer Finance (Lanka) PLC": "498, R. A. De Mel Mawatha,\nColombo 03",
+  "Siyapatha Finance PLC": "111, Dudley Senanayake Mawatha,\nColombo 08",
+  "SMB Finance PLC": "282/1, CBS Building, Galle Road,\nColombo 03",
+  "Softlogic Finance PLC": "JFI Tower 3, Zone B & C, 6th Floor, No. 75, Piyadasa Sirisena Mawatha,\nColombo 10",
+  "UB Finance PLC": "10, Daisy Villa Avenue,\nColombo 04",
+  "Vallibel Finance PLC": "310, Galle Road,\nColombo 03"
+};
+
+$('financeCompany').addEventListener('change',()=>{
+  const company=$('financeCompany').value;
+  $('financeAddress').value=financeAddresses[company]||'';
+  updatePreview();
+});
+ 
 $('recordSelect').addEventListener('change',()=>{ 
   const i=Number($('recordSelect').value); 
   if(Number.isInteger(i)&&rows[i]){ 
@@ -542,7 +602,17 @@ function fillFromRow(r){
   setVal('shopCode',value(r,['Shop Code','ShopCode','Code']));
   setVal('shop',value(r,['Shop'])); 
   setVal('saleType',value(r,['Cash Sale or Credit Sale','Sale Type','Sale'])); 
-  setVal('financeCompany',value(r,['Leasing Company','Finance Company','Finance Partner'])); 
+  const excelFinanceCompany=clean(value(r,['Leasing Company','Finance Company','Finance Partner']));
+  if(excelFinanceCompany){
+    const select=$('financeCompany');
+    let option=[...select.options].find(o=>o.value===excelFinanceCompany);
+    if(!option){
+      option=new Option(excelFinanceCompany,excelFinanceCompany);
+      select.add(option);
+    }
+    select.value=excelFinanceCompany;
+    $('financeAddress').value=financeAddresses[excelFinanceCompany]||clean(value(r,['Finance Address','Finance Company Address']));
+  } 
   setVal('vehicleNo',value(r,['Vehicle No','Vehicle Number'])); 
   setVal('receivedDate',value(r,['Received Date'])); 
   setVal('year',value(r,['Year of Manufacture','Year','Manufacture Year'])); 
@@ -550,7 +620,7 @@ function fillFromRow(r){
   setVal('make',value(r,['Make','Manufacturer'])); 
   setVal('model',value(r,['Model','Vehicle Model'])); 
   setVal('origin',value(r,['Country of Origin','Origin','Country'])); 
-  setVal('financeAddress',value(r,['Finance Address','Finance Company Address'])); 
+  if(!financeAddresses[clean($('financeCompany').value)]) setVal('financeAddress',value(r,['Finance Address','Finance Company Address'])); 
 } 
 function showAllData(r){ 
   const grid=$('dataGrid');grid.innerHTML=''; 
@@ -633,7 +703,7 @@ function updatePreview(){
 } 
 function clearForm(){ 
   document.querySelectorAll('.form input,.form textarea').forEach(el=>{if(el.type!=='number')el.value=''}); 
-  $('units').value=1;$('unitPrice').value=0;$('discount').value=0;$('advance').value=0;$('vatRate').value=18; 
+  $('financeCompany').value='';$('financeAddress').value='';$('units').value=1;$('unitPrice').value=0;$('discount').value=0;$('advance').value=0;$('vatRate').value=18; 
   $('recordSearch').value='';$('recordSelect').value='';$('dataCard').classList.remove('show');selectedRow=null;updatePreview(); 
 } 
 async function downloadPDF(){ 
